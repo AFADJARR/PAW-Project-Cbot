@@ -3,6 +3,7 @@
 
 const WARNA = ["Hitam", "Putih", "Merah", "Biru", "Kuning"];
 const JENIS = ["Mobil", "Motor"];
+const METODE_BAYAR = ["Tunai", "QRIS/Transfer"];
 
 // Buang karakter kontrol, rapikan spasi. Bukan string -> ''.
 function teks(v) {
@@ -53,6 +54,10 @@ function validasiPesanan(body, produkTersedia) {
   const pilihan = produkTersedia.find((p) => p.id === produkId);
   if (!pilihan) errors.produkId = "Pilih varian plat yang tersedia.";
 
+  const metodeBayar = teks(b.metodeBayar);
+  if (!METODE_BAYAR.includes(metodeBayar))
+    errors.metodeBayar = "Pilih metode pembayaran.";
+
   // Varian "Standar" selalu hitam; hanya varian "Custom" yang boleh memilih warna.
   let warna = teks(b.warna);
   if (pilihan && !/custom/i.test(pilihan.varian)) warna = "Hitam";
@@ -68,8 +73,9 @@ function validasiPesanan(body, produkTersedia) {
       warna,
       jumlah: b.jumlah,
       produkId: b.produkId,
+      metodeBayar,
     },
-    data: { nama, noHp, teksPlat, warna, jumlah },
+    data: { nama, noHp, teksPlat, warna, jumlah, metodeBayar },
   };
 }
 
@@ -122,6 +128,7 @@ function kodePesanan(v) {
 module.exports = {
   WARNA,
   JENIS,
+  METODE_BAYAR,
   teks,
   validasiPesanan,
   validasiProduk,

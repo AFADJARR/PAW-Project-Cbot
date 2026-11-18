@@ -2,6 +2,12 @@
 
 <h1 class="text-xl font-semibold mb-4">Dashboard</h1>
 
+<% if (menunggu > 0) { %>
+  <a href="/admin/pesanan?bayar=Menunggu%20Verifikasi" class="block mb-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-sm hover:border-amber-400">
+    <strong><%= menunggu %></strong> bukti pembayaran menunggu diperiksa. Klik untuk melihat.
+  </a>
+<% } %>
+
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
   <div class="<%= ui.card %> p-4 col-span-2 lg:col-span-1">
     <p class="text-xs text-slate-500">Total pesanan</p>
@@ -15,11 +21,19 @@
   <% }) %>
 </div>
 
-<div class="grid gap-3 sm:grid-cols-2 mt-3">
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mt-3">
   <div class="<%= ui.card %> p-4">
     <p class="text-xs text-slate-500">Nilai seluruh pesanan</p>
     <p class="text-xl font-semibold mt-1"><%= formatRupiah(rekap.nilai) %></p>
   </div>
+  <a href="/admin/pesanan?bayar=Sudah%20Dibayar" class="<%= ui.card %> p-4 hover:border-slate-900 transition">
+    <p class="text-xs text-slate-500">Sudah dibayar</p>
+    <p class="text-xl font-semibold mt-1 text-green-700"><%= formatRupiah(rekap.terbayar) %></p>
+  </a>
+  <a href="/admin/pesanan?bayar=Belum%20Dibayar" class="<%= ui.card %> p-4 hover:border-slate-900 transition">
+    <p class="text-xs text-slate-500">Belum dibayar</p>
+    <p class="text-xl font-semibold mt-1 text-red-700"><%= formatRupiah(rekap.belumDibayar) %></p>
+  </a>
   <a href="/admin/produk" class="<%= ui.card %> p-4 hover:border-slate-900 transition">
     <p class="text-xs text-slate-500">Produk tersedia</p>
     <p class="text-xl font-semibold mt-1"><%= produk.tersedia %> <span class="text-sm font-normal text-slate-500">dari <%= produk.total %> varian</span></p>
@@ -31,9 +45,9 @@
   <% if (!terbaru.length) { %>
     <p class="p-4 text-sm text-slate-500">Belum ada pesanan.</p>
   <% } else { %>
-    <table class="w-full min-w-[560px]">
+    <table class="w-full min-w-[640px]">
       <thead class="border-b border-slate-200"><tr>
-        <th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Pelanggan</th><th class="<%= ui.th %>">Plat</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Status</th>
+        <th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Pelanggan</th><th class="<%= ui.th %>">Plat</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Bayar</th><th class="<%= ui.th %>">Status</th>
       </tr></thead>
       <tbody>
         <% terbaru.forEach(function (p) { %>
@@ -42,6 +56,7 @@
             <td class="<%= ui.td %>"><%= p.nama %></td>
             <td class="<%= ui.td %> tracking-wider"><%= p.teksPlat %></td>
             <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.total) %></td>
+            <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.bayar[p.statusBayar] %>"><%= p.statusBayar %></span></td>
             <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.status[p.status] %>"><%= p.status %></span></td>
           </tr>
         <% }) %>

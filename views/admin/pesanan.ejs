@@ -12,6 +12,15 @@
       <% }) %>
     </select>
   </div>
+ <div class="sm:w-48">
+    <label for="bayar" class="<%= ui.label %>">Pembayaran</label>
+    <select id="bayar" name="bayar" class="<%= ui.input %>">
+      <option value="">Semua</option>
+      <% BAYAR.forEach(function (b) { %>
+        <option value="<%= b %>" <%= filter.bayar === b ? 'selected' : '' %>><%= b %></option>
+      <% }) %>
+    </select>
+  </div>
   <div class="sm:w-56">
     <label for="q" class="<%= ui.label %>">Kode pesanan</label>
     <input id="q" name="q" type="text" maxlength="12" value="<%= filter.q %>" placeholder="PLT-..." class="<%= ui.input %> uppercase">
@@ -26,10 +35,10 @@
   <% if (!pesanan.length) { %>
     <p class="p-4 text-sm text-slate-500">Tidak ada pesanan yang cocok.</p>
   <% } else { %>
-    <table class="w-full min-w-[860px]">
+    <table class="w-full min-w-[1000px]">
       <thead class="border-b border-slate-200"><tr>
         <th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Pelanggan</th><th class="<%= ui.th %>">Plat</th>
-        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Status</th>
+        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Pembayaran</th><th class="<%= ui.th %>">Status</th>
       </tr></thead>
       <tbody>
         <% pesanan.forEach(function (p) { %>
@@ -49,6 +58,31 @@
             <td class="<%= ui.td %>"><%= p.jenisKendaraan %> &middot; <%= p.bahan %><br><span class="text-xs text-slate-500"><%= p.varian %></span></td>
             <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.total) %></td>
             <td class="<%= ui.td %>">
+              <p class="text-xs text-slate-500 mb-1"><%= p.metodeBayar %></p>
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap <%= ui.bayar[p.statusBayar] %>"><%= p.statusBayar %></span>
+              <% if (p.buktiBayar) { %>
+                <a href="/admin/pesanan/<%= p.id %>/bukti" target="_blank" rel="noopener" class="block text-xs underline mt-1">Lihat bukti</a>
+              <% } %>
+              <div class="flex flex-wrap gap-1 mt-2">
+                <% if (p.statusBayar !== 'Sudah Dibayar') { %>
+                  <form method="post" action="/admin/pesanan/<%= p.id %>/bayar">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="kembali" value="<%= kembali %>">
+                    <input type="hidden" name="statusBayar" value="Sudah Dibayar">
+                    <button type="submit" class="<%= ui.btnSm %>"><%= p.statusBayar === 'Menunggu Verifikasi' ? 'Setujui' : 'Tandai Lunas' %></button>
+                  </form>
+                <% } %>
+                <% if (p.statusBayar === 'Menunggu Verifikasi' || (p.statusBayar === 'Sudah Dibayar' && p.status !== 'Sudah Diambil')) { %>
+                  <form method="post" action="/admin/pesanan/<%= p.id %>/bayar">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="kembali" value="<%= kembali %>">
+                    <input type="hidden" name="statusBayar" value="Belum Dibayar">
+                    <button type="submit" class="<%= ui.btnSm %>"><%= p.statusBayar === 'Menunggu Verifikasi' ? 'Tolak' : 'Batalkan' %></button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+            <td class="<%= ui.td %>">
               <form method="post" action="/admin/pesanan/<%= p.id %>/status" class="flex items-center gap-2">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="kembali" value="<%= kembali %>">
@@ -66,6 +100,6 @@
     </table>
   <% } %>
 </div>
-<p class="text-xs text-slate-500 mt-3">Menampilkan maksimal 200 pesanan terbaru. Status yang disimpan langsung terlihat oleh pelanggan di menu Cek Status.</p>
+<p class="text-xs text-slate-500 mt-3">Menampilkan maksimal 200 pesanan terbaru. Status dan pembayaran yang disimpan langsung terlihat oleh pelanggan di menu Cek Status. Status "Sudah Diambil" hanya bisa dipilih setelah pesanan ditandai lunas.</p>
 
 <%- include('../partials/adminFoot') %>

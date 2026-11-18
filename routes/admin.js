@@ -37,6 +37,8 @@ router.post("/produk/:id/toggle", admin.produkToggle);
 
 router.get("/pesanan", admin.pesananIndex);
 router.post("/pesanan/:id/status", admin.pesananStatus);
+router.post("/pesanan/:id/bayar", admin.pesananBayar);
+router.get("/pesanan/:id/bukti", admin.buktiFile);
 
 router.get("/rekap", admin.rekap);
 

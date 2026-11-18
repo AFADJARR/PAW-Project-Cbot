@@ -40,9 +40,47 @@
       <dt class="text-slate-500">Jumlah</dt><dd><%= pesanan.jumlah %></dd>
       <dt class="text-slate-500">Total</dt><dd class="font-semibold"><%= formatRupiah(pesanan.total) %></dd>
       <dt class="text-slate-500">Dipesan</dt><dd><%= formatTanggal(pesanan.createdAt) %></dd>
+      <dt class="text-slate-500">Pembayaran</dt>
+      <dd>
+        <%= pesanan.metodeBayar %>
+        <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.bayar[pesanan.statusBayar] %>"><%= pesanan.statusBayar %></span>
+      </dd>
     </dl>
 
-    <p class="mt-4 text-xs text-slate-500">Pembayaran dilakukan di luar aplikasi (transfer/QRIS atau bayar di tempat) dan dicek oleh pemilik toko.</p>
+    <% if (pesanan.statusBayar !== 'Sudah Dibayar') { %>
+      <div class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm">
+        <% if (pesanan.metodeBayar === 'Tunai') { %>
+          <p class="font-medium">Bayar tunai di toko</p>
+          <p class="text-slate-600 mt-1">Siapkan <%= formatRupiah(pesanan.total) %> dan bayar saat mengambil plat. Sebutkan kode pesanan <strong><%= pesanan.kode %></strong>.</p>
+          <p class="text-xs text-slate-500 mt-2">Status akan berubah menjadi "Sudah Dibayar" setelah pemilik toko menerima pembayaranmu.</p>
+        <% } else { %>
+          <% if (pesanan.statusBayar === 'Menunggu Verifikasi') { %>
+            <p class="font-medium">Bukti pembayaran sudah dikirim</p>
+            <p class="text-slate-600 mt-1">Pemilik toko akan memeriksanya. Status berubah menjadi "Sudah Dibayar" setelah bukti disetujui. Salah kirim? Kamu bisa mengganti buktinya di bawah.</p>
+          <% } else { %>
+            <p class="font-medium">Cara bayar (QRIS/Transfer)</p>
+            <p class="text-slate-600 mt-1">Bayar <strong><%= formatRupiah(pesanan.total) %></strong> lalu sebutkan kode <strong><%= pesanan.kode %></strong> sebagai berita/keterangan. Setelah itu unggah bukti pembayarannya di bawah.</p>
+            <p class="mt-2 whitespace-pre-line"><%= pembayaran.info %></p>
+            <% if (pembayaran.qrisImage) { %>
+              <img src="<%= pembayaran.qrisImage %>" alt="QRIS toko" class="mt-3 w-48 max-w-full rounded-lg border border-slate-200">
+            <% } %>
+          <% } %>
+          <form method="post" action="/status/bukti" enctype="multipart/form-data" class="mt-4 space-y-2">
+            <input type="hidden" name="kode" value="<%= pesanan.kode %>">
+            <label for="bukti" class="<%= ui.label %>"><%= pesanan.statusBayar === 'Menunggu Verifikasi' ? 'Ganti bukti pembayaran' : 'Unggah bukti pembayaran' %></label>
+            <input id="bukti" name="bukti" type="file" required accept="image/jpeg,image/png,image/webp"
+              class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white">
+            <p class="text-xs text-slate-500">Gambar JPG, PNG, atau WebP, maksimal 2 MB.</p>
+            <button type="submit" class="<%= ui.btn %>">Kirim bukti</button>
+          </form>
+        <% } %>
+      </div>
+    <% } %>
+
+    <p class="mt-4 text-xs text-slate-500">
+      Arti status: <strong>Diterima</strong> pesanan masuk &middot; <strong>Diproses</strong> plat sedang dibuat &middot;
+      <strong>Siap Diambil</strong> plat sudah jadi, silakan ke toko &middot; <strong>Sudah Diambil</strong> plat sudah kamu ambil.
+    </p>
   </section>
 <% } %>
 

@@ -3,21 +3,24 @@
 const produkModel = require("../models/produkModel");
 const pesananModel = require("../models/pesananModel");
 const AppError = require("../utils/AppError");
+const bukti = require("../utils/bukti");
 const { validasiProduk, JENIS, tanggal, teks } = require("../utils/validators");
 
 // ---------- Dashboard ----------
 async function dashboard(req, res, next) {
   try {
-    const [rekap, terbaru, produk] = await Promise.all([
+    const [rekap, terbaru, produk, menunggu] = await Promise.all([
       pesananModel.rekap({}),
       pesananModel.list({}, 5),
       produkModel.hitung(),
+      pesananModel.hitungBayar("Menunggu Verifikasi"),
     ]);
     res.render("admin/dashboard", {
       judul: "Dashboard Admin",
       rekap,
       terbaru,
       produk,
+      menunggu,
     });
   } catch (err) {
     next(err);
@@ -122,13 +125,14 @@ async function produkToggle(req, res, next) {
 // ---------- Pesanan ----------
 function bacaFilter(query) {
   const status = pesananModel.STATUS.includes(query.status) ? query.status : "";
+  const bayar = pesananModel.BAYAR.includes(query.bayar) ? query.bayar : "";
   const dari = tanggal(query.dari) || "";
   const sampai = tanggal(query.sampai) || "";
   const q = teks(query.q)
     .toUpperCase()
     .replace(/[^A-Z0-9-]/g, "")
     .slice(0, 12);
-  return { status, dari, sampai, q };
+  return { status, bayar, dari, sampai, q };
 }
 
 async function pesananIndex(req, res, next) {
@@ -139,6 +143,7 @@ async function pesananIndex(req, res, next) {
       pesanan: await pesananModel.list(filter),
       filter,
       STATUS: pesananModel.STATUS,
+      BAYAR: pesananModel.BAYAR,
       kembali: req.originalUrl,
     });
   } catch (err) {
@@ -153,24 +158,99 @@ async function pesananStatus(req, res, next) {
     if (!pesananModel.STATUS.includes(status))
       throw new AppError("Status tidak valid.", 400, "INVALID_STATUS");
 
-    const berubah = await pesananModel.updateStatus(
-      Number(req.params.id),
-      status,
-    );
-    if (!berubah)
+    const id = Number(req.params.id);
+    const pesanan = await pesananModel.findById(id);
+    if (!pesanan)
       throw new AppError("Pesanan tidak ditemukan.", 404, "NOT_FOUND");
 
-    req.flash("success", `Status pesanan diubah menjadi "${status}".`);
-    // hanya izinkan redirect ke halaman admin (mencegah open redirect)
-    const next_ = (req.body || {}).kembali;
-    res.redirect(
-      typeof next_ === "string" && /^\/admin\/[a-z]/.test(next_)
-        ? next_
-        : "/admin/pesanan",
-    );
+    // Plat baru boleh ditandai "Sudah Diambil" setelah pembayarannya lunas
+    if (status === "Sudah Diambil" && pesanan.statusBayar !== "Sudah Dibayar") {
+      req.flash(
+        "error",
+        `Pesanan ${pesanan.kode} belum dibayar. Tandai "Sudah Dibayar" dulu sebelum mengubah status menjadi "Sudah Diambil".`,
+      );
+    } else {
+      await pesananModel.updateStatus(id, status);
+      req.flash(
+        "success",
+        `Status pesanan ${pesanan.kode} diubah menjadi "${status}".`,
+      );
+    }
+    res.redirect(kembaliAman((req.body || {}).kembali));
   } catch (err) {
     next(err);
   }
+}
+
+// POST /admin/pesanan/:id/bayar  -> tandai Belum/Sudah Dibayar
+async function pesananBayar(req, res, next) {
+  try {
+    const statusBayar = teks((req.body || {}).statusBayar);
+    // admin hanya boleh menyetujui (Sudah Dibayar) atau menolak/membatalkan (Belum Dibayar)
+    if (!["Belum Dibayar", "Sudah Dibayar"].includes(statusBayar))
+      throw new AppError(
+        "Status pembayaran tidak valid.",
+        400,
+        "INVALID_PAYMENT_STATUS",
+      );
+
+    const id = Number(req.params.id);
+    const pesanan = await pesananModel.findById(id);
+    if (!pesanan)
+      throw new AppError("Pesanan tidak ditemukan.", 404, "NOT_FOUND");
+
+    // Pesanan yang sudah diambil tidak boleh dikembalikan menjadi belum dibayar
+    if (statusBayar === "Belum Dibayar" && pesanan.status === "Sudah Diambil") {
+      req.flash(
+        "error",
+        `Pesanan ${pesanan.kode} sudah diambil, status pembayarannya tidak bisa dikembalikan.`,
+      );
+    } else {
+      await pesananModel.updateBayar(id, statusBayar);
+      if (statusBayar === "Belum Dibayar")
+        await bukti.hapus(pesanan.buktiBayar);
+      req.flash(
+        "success",
+        pesanan.statusBayar === "Menunggu Verifikasi" &&
+          statusBayar === "Belum Dibayar"
+          ? `Bukti pesanan ${pesanan.kode} ditolak. Pelanggan bisa mengunggah ulang.`
+          : `Pembayaran pesanan ${pesanan.kode} ditandai "${statusBayar}".`,
+      );
+    }
+    res.redirect(kembaliAman((req.body || {}).kembali));
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /admin/pesanan/:id/bukti  -> tampilkan gambar bukti (hanya admin yang login)
+async function buktiFile(req, res, next) {
+  try {
+    const pesanan = await pesananModel.findById(Number(req.params.id));
+    const lokasi = pesanan && bukti.lokasi(pesanan.buktiBayar);
+    if (!lokasi)
+      throw new AppError("Bukti pembayaran tidak ditemukan.", 404, "NOT_FOUND");
+    res.set({
+      "Content-Type": bukti.mimeDari(pesanan.buktiBayar),
+      "Content-Disposition": "inline",
+      "Cache-Control": "private, no-store",
+    });
+    res.sendFile(lokasi, { dotfiles: "deny" }, (err) => {
+      if (err && !res.headersSent)
+        next(
+          new AppError("Bukti pembayaran tidak ditemukan.", 404, "NOT_FOUND"),
+        );
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// hanya izinkan redirect ke halaman admin (mencegah open redirect)
+function kembaliAman(url) {
+  return typeof url === "string" && /^\/admin\/[a-z]/.test(url)
+    ? url
+    : "/admin/pesanan";
 }
 
 // ---------- Rekap ----------
@@ -187,6 +267,7 @@ async function rekap(req, res, next) {
       ringkasan,
       pesanan: daftar,
       STATUS: pesananModel.STATUS,
+      BAYAR: pesananModel.BAYAR,
     });
   } catch (err) {
     next(err);
@@ -202,5 +283,7 @@ module.exports = {
   produkToggle,
   pesananIndex,
   pesananStatus,
+  pesananBayar,
+  buktiFile,
   rekap,
 };

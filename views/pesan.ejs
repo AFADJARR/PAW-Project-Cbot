@@ -66,6 +66,23 @@
     </div>
   </div>
 
+  <fieldset>
+    <legend class="<%= ui.label %>">Metode pembayaran</legend>
+    <div class="grid gap-2 sm:grid-cols-2">
+      <% METODE.forEach(function (m) { %>
+        <label class="flex items-start gap-3 rounded-xl border border-slate-300 px-3 py-2 text-sm cursor-pointer has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
+          <input type="radio" name="metodeBayar" value="<%= m %>" class="mt-1" <%= (values.metodeBayar || 'Tunai') === m ? 'checked' : '' %>>
+          <span>
+            <span class="font-medium"><%= m %></span>
+            <span class="block text-xs text-slate-500"><%= m === 'Tunai' ? 'Bayar langsung di toko saat mengambil plat.' : 'Bayar lewat transfer atau scan QRIS toko. Petunjuk tampil setelah pesan.' %></span>
+          </span>
+        </label>
+      <% }) %>
+    </div>
+    <p class="text-xs text-slate-500 mt-1">Pembayaran dilakukan di luar aplikasi dan dikonfirmasi oleh pemilik toko.</p>
+    <% if (errors.metodeBayar) { %><p class="<%= ui.error %>"><%= errors.metodeBayar %></p><% } %>
+  </fieldset>
+
   <!-- Pratinjau plat (F-07) -->
   <div>
     <p class="<%= ui.label %>">Pratinjau</p>

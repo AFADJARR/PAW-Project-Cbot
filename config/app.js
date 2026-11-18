@@ -9,6 +9,16 @@ module.exports = {
     process.env.SESSION_SECRET || "ganti-secret-ini-lewat-file-env",
   sessionMaxAgeMs: 2 * 60 * 60 * 1000, // sesi admin berlaku 2 jam
 
+  // Info pembayaran yang ditampilkan ke pelanggan (pembayaran tetap dilakukan di luar aplikasi)
+  pembayaran: {
+    info:
+      process.env.PAYMENT_INFO ||
+      "Hubungi toko untuk nomor rekening atau QRIS.",
+    qrisImage: /^\/img\/[\w.-]+$/.test(process.env.PAYMENT_QRIS_IMAGE || "")
+      ? process.env.PAYMENT_QRIS_IMAGE
+      : "",
+  },
+
   // Pembatas permintaan per IP (melindungi login, form pesanan, dan kuota Gemini)
   rate: {
     login: {

@@ -94,6 +94,8 @@
     baris("Teks plat", teksPlat());
     baris("Warna", warna.value);
     baris("Jumlah", jumlah.value);
+    var metode = form.querySelector('input[name="metodeBayar"]:checked');
+    baris("Pembayaran", metode ? metode.value : "-");
     baris("Nama", document.getElementById("nama").value.trim());
     baris("Nomor HP", document.getElementById("noHp").value.trim());
     baris("Total", total.textContent);

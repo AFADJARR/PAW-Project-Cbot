@@ -4,6 +4,7 @@ const rateLimit = require("../middlewares/rateLimit");
 const config = require("../config/app");
 const homeController = require("../controllers/homeController");
 const pesananController = require("../controllers/pesananController");
+const uploadBukti = require("../middlewares/uploadBukti");
 
 const router = express.Router();
 
@@ -17,5 +18,11 @@ router.get("/", homeController.index);
 router.get("/pesan", pesananController.form);
 router.post("/pesan", batasPesan, pesananController.simpan);
 router.get("/status", pesananController.status);
+router.post(
+  "/status/bukti",
+  batasPesan,
+  uploadBukti,
+  pesananController.uploadBukti,
+);
 
 module.exports = router;

@@ -8,6 +8,7 @@ const {
   WARNA,
   teks,
 } = require("../utils/validators");
+const bukti = require("../utils/bukti");
 
 // GET /pesan
 async function form(req, res, next) {
@@ -16,7 +17,8 @@ async function form(req, res, next) {
       judul: "Pesan Plat",
       produk: await produkModel.getTersedia(),
       warna: WARNA,
-      values: { jumlah: 1 },
+      values: { jumlah: 1, metodeBayar: "Tunai" },
+      METODE: pesananModel.METODE,
       errors: {},
     });
   } catch (err) {
@@ -37,6 +39,7 @@ async function simpan(req, res, next) {
         warna: WARNA,
         values,
         errors,
+        METODE: pesananModel.METODE,
       });
     }
 
@@ -63,6 +66,9 @@ function dataPublik(p) {
     teksPlat: p.teksPlat,
     jumlah: p.jumlah,
     total: p.total,
+    metodeBayar: p.metodeBayar,
+    statusBayar: p.statusBayar,
+    buktiTerkirim: Boolean(p.buktiBayar),
     createdAt: p.createdAt,
   };
 }
@@ -113,4 +119,49 @@ async function apiStatus(req, res, next) {
   }
 }
 
-module.exports = { form, simpan, status, apiStatus };
+// POST /status/bukti  (multipart: kode + bukti)
+async function uploadBukti(req, res, next) {
+  try {
+    const kode = kodePesanan(req.body && req.body.kode);
+    const kembali = kode ? "/status?kode=" + kode : "/status";
+    const tolak = (pesan) => {
+      req.flash("error", pesan);
+      return res.redirect(kembali);
+    };
+
+    if (req.uploadError) return tolak(req.uploadError);
+    const pesanan = kode ? await pesananModel.findByKode(kode) : null;
+    if (!pesanan) return tolak("Kode pesanan tidak ditemukan.");
+    if (pesanan.metodeBayar !== "QRIS/Transfer")
+      return tolak(
+        "Pesanan ini dibayar tunai di toko, tidak perlu bukti pembayaran.",
+      );
+    if (pesanan.statusBayar === "Sudah Dibayar")
+      return tolak("Pembayaran pesanan ini sudah dikonfirmasi.");
+    if (!req.file) return tolak("Pilih file bukti pembayaran terlebih dahulu.");
+
+    const ext = bukti.deteksiTipe(req.file.buffer);
+    if (!ext)
+      return tolak(
+        "Format file tidak didukung. Gunakan gambar JPG, PNG, atau WebP.",
+      );
+
+    const nama = await bukti.simpan(req.file.buffer, ext);
+    const berubah = await pesananModel.setBukti(pesanan.id, nama);
+    if (!berubah) {
+      await bukti.hapus(nama);
+      return tolak("Bukti tidak dapat dikirim untuk pesanan ini.");
+    }
+    await bukti.hapus(pesanan.buktiBayar); // ganti bukti lama bila ada
+
+    req.flash(
+      "success",
+      "Bukti pembayaran terkirim. Pemilik toko akan memeriksanya.",
+    );
+    res.redirect(kembali);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { form, simpan, status, apiStatus, uploadBukti };

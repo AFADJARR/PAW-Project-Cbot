@@ -20,13 +20,22 @@
       <% }) %>
     </select>
   </div>
+  <div class="sm:w-44">
+    <label for="bayar" class="<%= ui.label %>">Pembayaran</label>
+    <select id="bayar" name="bayar" class="<%= ui.input %>">
+      <option value="">Semua</option>
+      <% BAYAR.forEach(function (b) { %>
+        <option value="<%= b %>" <%= filter.bayar === b ? 'selected' : '' %>><%= b %></option>
+      <% }) %>
+    </select>
+  </div>
   <div class="flex gap-2">
     <button type="submit" class="<%= ui.btn %>">Terapkan</button>
     <a href="/admin/rekap" class="<%= ui.btnGhost %>">Reset</a>
   </div>
 </form>
 
-<div class="grid gap-3 sm:grid-cols-2">
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div class="<%= ui.card %> p-4">
     <p class="text-xs text-slate-500">Jumlah pesanan</p>
     <p id="rekap-jumlah" class="text-2xl font-semibold mt-1"><%= ringkasan.jumlah %></p>
@@ -35,12 +44,20 @@
     <p class="text-xs text-slate-500">Total nilai pesanan</p>
     <p id="rekap-nilai" class="text-2xl font-semibold mt-1"><%= formatRupiah(ringkasan.nilai) %></p>
   </div>
+  <div class="<%= ui.card %> p-4">
+    <p class="text-xs text-slate-500">Sudah dibayar</p>
+    <p id="rekap-terbayar" class="text-2xl font-semibold mt-1 text-green-700"><%= formatRupiah(ringkasan.terbayar) %></p>
+  </div>
+  <div class="<%= ui.card %> p-4">
+    <p class="text-xs text-slate-500">Belum dibayar</p>
+    <p id="rekap-belum" class="text-2xl font-semibold mt-1 text-red-700"><%= formatRupiah(ringkasan.belumDibayar) %></p>
+  </div>
 </div>
 
 <div class="<%= ui.card %> overflow-x-auto mt-3">
-  <table class="w-full min-w-[420px]">
+  <table class="w-full min-w-[520px]">
     <thead class="border-b border-slate-200"><tr>
-      <th class="<%= ui.th %>">Status</th><th class="<%= ui.th %>">Jumlah</th><th class="<%= ui.th %>">Nilai</th>
+      <th class="<%= ui.th %>">Status</th><th class="<%= ui.th %>">Jumlah</th><th class="<%= ui.th %>">Nilai</th><th class="<%= ui.th %>">Sudah dibayar</th>
     </tr></thead>
     <tbody>
       <% ringkasan.perStatus.forEach(function (s) { %>
@@ -48,6 +65,7 @@
           <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.status[s.status] %>"><%= s.status %></span></td>
           <td class="<%= ui.td %>"><%= s.jumlah %></td>
           <td class="<%= ui.td %>"><%= formatRupiah(s.nilai) %></td>
+          <td class="<%= ui.td %>"><%= formatRupiah(s.terbayar) %></td>
         </tr>
       <% }) %>
     </tbody>
@@ -59,10 +77,10 @@
   <% if (!pesanan.length) { %>
     <p class="p-4 text-sm text-slate-500">Tidak ada pesanan pada filter ini.</p>
   <% } else { %>
-    <table class="w-full min-w-[640px]">
+    <table class="w-full min-w-[720px]">
       <thead class="border-b border-slate-200"><tr>
         <th class="<%= ui.th %>">Tanggal</th><th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Plat</th>
-        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Status</th>
+        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Bayar</th><th class="<%= ui.th %>">Status</th>
       </tr></thead>
       <tbody>
         <% pesanan.forEach(function (p) { %>
@@ -72,6 +90,7 @@
             <td class="<%= ui.td %> tracking-wider"><%= p.teksPlat %></td>
             <td class="<%= ui.td %>"><%= p.jenisKendaraan %> &middot; <%= p.bahan %> &middot; <%= p.varian %></td>
             <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.total) %></td>
+            <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.bayar[p.statusBayar] %>"><%= p.statusBayar %></span></td>
             <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.status[p.status] %>"><%= p.status %></span></td>
           </tr>
         <% }) %>

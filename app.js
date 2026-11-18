@@ -25,6 +25,7 @@ app.set("views", path.join(__dirname, "views"));
 app.locals.ui = ui;
 app.locals.formatRupiah = formatRupiah;
 app.locals.formatTanggal = formatTanggal;
+app.locals.pembayaran = config.pembayaran;
 
 app.use(logger); // catat semua request
 app.use(securityHeaders);

@@ -1,0 +1,71 @@
+<%- include('../partials/adminHead') %>
+
+<h1 class="text-xl font-semibold mb-4">Kelola Pesanan</h1>
+
+<form method="get" action="/admin/pesanan" class="<%= ui.card %> p-4 flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
+  <div class="sm:w-48">
+    <label for="status" class="<%= ui.label %>">Status</label>
+    <select id="status" name="status" class="<%= ui.input %>">
+      <option value="">Semua status</option>
+      <% STATUS.forEach(function (s) { %>
+        <option value="<%= s %>" <%= filter.status === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+  </div>
+  <div class="sm:w-56">
+    <label for="q" class="<%= ui.label %>">Kode pesanan</label>
+    <input id="q" name="q" type="text" maxlength="12" value="<%= filter.q %>" placeholder="PLT-..." class="<%= ui.input %> uppercase">
+  </div>
+  <div class="flex gap-2">
+    <button type="submit" class="<%= ui.btn %>">Terapkan</button>
+    <a href="/admin/pesanan" class="<%= ui.btnGhost %>">Reset</a>
+  </div>
+</form>
+
+<div class="<%= ui.card %> overflow-x-auto">
+  <% if (!pesanan.length) { %>
+    <p class="p-4 text-sm text-slate-500">Tidak ada pesanan yang cocok.</p>
+  <% } else { %>
+    <table class="w-full min-w-[860px]">
+      <thead class="border-b border-slate-200"><tr>
+        <th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Pelanggan</th><th class="<%= ui.th %>">Plat</th>
+        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Status</th>
+      </tr></thead>
+      <tbody>
+        <% pesanan.forEach(function (p) { %>
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="<%= ui.td %> whitespace-nowrap">
+              <p class="font-medium"><%= p.kode %></p>
+              <p class="text-xs text-slate-500"><%= formatTanggal(p.createdAt) %></p>
+            </td>
+            <td class="<%= ui.td %>">
+              <p><%= p.nama %></p>
+              <p class="text-xs text-slate-500"><%= p.noHp %></p>
+            </td>
+            <td class="<%= ui.td %>">
+              <p class="font-semibold tracking-widest"><%= p.teksPlat %></p>
+              <p class="text-xs text-slate-500"><%= p.warna %> &middot; <%= p.jumlah %> pcs</p>
+            </td>
+            <td class="<%= ui.td %>"><%= p.jenisKendaraan %> &middot; <%= p.bahan %><br><span class="text-xs text-slate-500"><%= p.varian %></span></td>
+            <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.total) %></td>
+            <td class="<%= ui.td %>">
+              <form method="post" action="/admin/pesanan/<%= p.id %>/status" class="flex items-center gap-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="kembali" value="<%= kembali %>">
+                <select name="status" aria-label="Status pesanan <%= p.kode %>" class="rounded-lg border border-slate-300 px-2 py-1 text-xs bg-white">
+                  <% STATUS.forEach(function (s) { %>
+                    <option value="<%= s %>" <%= p.status === s ? 'selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+                <button type="submit" class="<%= ui.btnSm %>">Simpan</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<p class="text-xs text-slate-500 mt-3">Menampilkan maksimal 200 pesanan terbaru. Status yang disimpan langsung terlihat oleh pelanggan di menu Cek Status.</p>
+
+<%- include('../partials/adminFoot') %>

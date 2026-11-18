@@ -1,0 +1,49 @@
+<%- include('../partials/adminHead') %>
+
+<h1 class="text-xl font-semibold mb-4"><%= produkId ? 'Ubah Produk' : 'Tambah Produk' %></h1>
+
+<form method="post" action="<%= produkId ? '/admin/produk/' + produkId : '/admin/produk' %>"
+      class="<%= ui.card %> p-5 sm:p-6 space-y-4 max-w-xl">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div>
+    <label for="jenisKendaraan" class="<%= ui.label %>">Jenis kendaraan</label>
+    <select id="jenisKendaraan" name="jenisKendaraan" class="<%= ui.input %>">
+      <% JENIS.forEach(function (j) { %>
+        <option value="<%= j %>" <%= values.jenisKendaraan === j ? 'selected' : '' %>><%= j %></option>
+      <% }) %>
+    </select>
+    <% if (errors.jenisKendaraan) { %><p class="<%= ui.error %>"><%= errors.jenisKendaraan %></p><% } %>
+  </div>
+
+  <div>
+    <label for="bahan" class="<%= ui.label %>">Bahan</label>
+    <input id="bahan" name="bahan" type="text" required maxlength="50" value="<%= values.bahan || '' %>" class="<%= ui.input %>" placeholder="Contoh: Akrilik">
+    <% if (errors.bahan) { %><p class="<%= ui.error %>"><%= errors.bahan %></p><% } %>
+  </div>
+
+  <div>
+    <label for="varian" class="<%= ui.label %>">Varian</label>
+    <input id="varian" name="varian" type="text" required maxlength="80" value="<%= values.varian || '' %>" class="<%= ui.input %>" placeholder="Contoh: Standar Hitam atau Custom Warna">
+    <p class="text-xs text-slate-500 mt-1">Varian yang mengandung kata "Custom" memberi pelanggan pilihan warna plat.</p>
+    <% if (errors.varian) { %><p class="<%= ui.error %>"><%= errors.varian %></p><% } %>
+  </div>
+
+  <div>
+    <label for="harga" class="<%= ui.label %>">Harga (Rp)</label>
+    <input id="harga" name="harga" type="number" required min="1000" max="10000000" step="1" value="<%= values.harga || '' %>" class="<%= ui.input %>">
+    <% if (errors.harga) { %><p class="<%= ui.error %>"><%= errors.harga %></p><% } %>
+  </div>
+
+  <label class="flex items-center gap-2 text-sm">
+    <input type="checkbox" name="tersedia" value="1" <%= values.tersedia ? 'checked' : '' %> class="w-4 h-4">
+    Tersedia (bisa dipesan pelanggan)
+  </label>
+
+  <div class="flex gap-2 pt-2">
+    <button type="submit" class="<%= ui.btn %>">Simpan</button>
+    <a href="/admin/produk" class="<%= ui.btnGhost %>">Batal</a>
+  </div>
+</form>
+
+<%- include('../partials/adminFoot') %>

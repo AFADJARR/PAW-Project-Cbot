@@ -1,0 +1,83 @@
+<%- include('../partials/adminHead') %>
+
+<h1 class="text-xl font-semibold mb-4">Rekap Pesanan</h1>
+
+<form method="get" action="/admin/rekap" class="<%= ui.card %> p-4 flex flex-col sm:flex-row sm:items-end gap-3 mb-4">
+  <div>
+    <label for="dari" class="<%= ui.label %>">Dari tanggal</label>
+    <input id="dari" name="dari" type="date" value="<%= filter.dari %>" class="<%= ui.input %>">
+  </div>
+  <div>
+    <label for="sampai" class="<%= ui.label %>">Sampai tanggal</label>
+    <input id="sampai" name="sampai" type="date" value="<%= filter.sampai %>" class="<%= ui.input %>">
+  </div>
+  <div class="sm:w-48">
+    <label for="status" class="<%= ui.label %>">Status</label>
+    <select id="status" name="status" class="<%= ui.input %>">
+      <option value="">Semua status</option>
+      <% STATUS.forEach(function (s) { %>
+        <option value="<%= s %>" <%= filter.status === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+  </div>
+  <div class="flex gap-2">
+    <button type="submit" class="<%= ui.btn %>">Terapkan</button>
+    <a href="/admin/rekap" class="<%= ui.btnGhost %>">Reset</a>
+  </div>
+</form>
+
+<div class="grid gap-3 sm:grid-cols-2">
+  <div class="<%= ui.card %> p-4">
+    <p class="text-xs text-slate-500">Jumlah pesanan</p>
+    <p id="rekap-jumlah" class="text-2xl font-semibold mt-1"><%= ringkasan.jumlah %></p>
+  </div>
+  <div class="<%= ui.card %> p-4">
+    <p class="text-xs text-slate-500">Total nilai pesanan</p>
+    <p id="rekap-nilai" class="text-2xl font-semibold mt-1"><%= formatRupiah(ringkasan.nilai) %></p>
+  </div>
+</div>
+
+<div class="<%= ui.card %> overflow-x-auto mt-3">
+  <table class="w-full min-w-[420px]">
+    <thead class="border-b border-slate-200"><tr>
+      <th class="<%= ui.th %>">Status</th><th class="<%= ui.th %>">Jumlah</th><th class="<%= ui.th %>">Nilai</th>
+    </tr></thead>
+    <tbody>
+      <% ringkasan.perStatus.forEach(function (s) { %>
+        <tr class="border-b border-slate-100 last:border-0">
+          <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.status[s.status] %>"><%= s.status %></span></td>
+          <td class="<%= ui.td %>"><%= s.jumlah %></td>
+          <td class="<%= ui.td %>"><%= formatRupiah(s.nilai) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mt-8 mb-3">Daftar pesanan</h2>
+<div class="<%= ui.card %> overflow-x-auto">
+  <% if (!pesanan.length) { %>
+    <p class="p-4 text-sm text-slate-500">Tidak ada pesanan pada filter ini.</p>
+  <% } else { %>
+    <table class="w-full min-w-[640px]">
+      <thead class="border-b border-slate-200"><tr>
+        <th class="<%= ui.th %>">Tanggal</th><th class="<%= ui.th %>">Kode</th><th class="<%= ui.th %>">Plat</th>
+        <th class="<%= ui.th %>">Varian</th><th class="<%= ui.th %>">Total</th><th class="<%= ui.th %>">Status</th>
+      </tr></thead>
+      <tbody>
+        <% pesanan.forEach(function (p) { %>
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="<%= ui.td %> whitespace-nowrap"><%= formatTanggal(p.createdAt) %></td>
+            <td class="<%= ui.td %> font-medium whitespace-nowrap"><%= p.kode %></td>
+            <td class="<%= ui.td %> tracking-wider"><%= p.teksPlat %></td>
+            <td class="<%= ui.td %>"><%= p.jenisKendaraan %> &middot; <%= p.bahan %> &middot; <%= p.varian %></td>
+            <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.total) %></td>
+            <td class="<%= ui.td %>"><span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= ui.status[p.status] %>"><%= p.status %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/adminFoot') %>

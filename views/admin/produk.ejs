@@ -1,0 +1,44 @@
+<%- include('../partials/adminHead') %>
+
+<div class="flex items-center justify-between gap-3 mb-4">
+  <h1 class="text-xl font-semibold">Kelola Produk</h1>
+  <a href="/admin/produk/baru" class="<%= ui.btn %>">+ Tambah Produk</a>
+</div>
+
+<div class="<%= ui.card %> overflow-x-auto">
+  <% if (!produk.length) { %>
+    <p class="p-4 text-sm text-slate-500">Belum ada produk.</p>
+  <% } else { %>
+    <table class="w-full min-w-[560px]">
+      <thead class="border-b border-slate-200"><tr>
+        <th class="<%= ui.th %>">Jenis</th><th class="<%= ui.th %>">Bahan</th><th class="<%= ui.th %>">Varian</th>
+        <th class="<%= ui.th %>">Harga</th><th class="<%= ui.th %>">Status</th><th class="<%= ui.th %>">Aksi</th>
+      </tr></thead>
+      <tbody>
+        <% produk.forEach(function (p) { %>
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="<%= ui.td %>"><%= p.jenisKendaraan %></td>
+            <td class="<%= ui.td %>"><%= p.bahan %></td>
+            <td class="<%= ui.td %>"><%= p.varian %></td>
+            <td class="<%= ui.td %> whitespace-nowrap"><%= formatRupiah(p.harga) %></td>
+            <td class="<%= ui.td %>">
+              <span class="px-2 py-0.5 rounded-full text-xs font-semibold <%= p.tersedia ? 'bg-green-100 text-green-800' : 'bg-slate-200 text-slate-600' %>"><%= p.tersedia ? 'Tersedia' : 'Habis' %></span>
+            </td>
+            <td class="<%= ui.td %>">
+              <div class="flex flex-wrap gap-2">
+                <a href="/admin/produk/<%= p.id %>/ubah" class="<%= ui.btnSm %>">Ubah</a>
+                <form method="post" action="/admin/produk/<%= p.id %>/toggle">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="<%= ui.btnSm %>"><%= p.tersedia ? 'Tandai Habis' : 'Tandai Tersedia' %></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+<p class="text-xs text-slate-500 mt-3">Varian berstatus Habis otomatis tidak muncul di halaman pelanggan, form pesanan, dan tidak bisa dipesan.</p>
+
+<%- include('../partials/adminFoot') %>

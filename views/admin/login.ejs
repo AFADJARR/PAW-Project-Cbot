@@ -1,0 +1,27 @@
+<%- include('../partials/adminHead') %>
+
+<section class="<%= ui.card %> p-6 sm:p-8 max-w-sm mx-auto mt-6">
+  <h1 class="text-xl font-semibold">Login Admin</h1>
+  <p class="text-sm text-slate-500 mt-1">Khusus pemilik toko.</p>
+
+  <% if (error) { %>
+    <p role="alert" class="mt-4 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm"><%= error %></p>
+  <% } %>
+
+  <form method="post" action="/admin/login" class="mt-5 space-y-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div>
+      <label for="username" class="<%= ui.label %>">Username</label>
+      <input id="username" name="username" type="text" required maxlength="50" autocomplete="username"
+        value="<%= username %>" class="<%= ui.input %>">
+    </div>
+    <div>
+      <label for="password" class="<%= ui.label %>">Kata sandi</label>
+      <input id="password" name="password" type="password" required maxlength="100" autocomplete="current-password"
+        class="<%= ui.input %>">
+    </div>
+    <button type="submit" class="<%= ui.btn %> w-full">Masuk</button>
+  </form>
+</section>
+
+<%- include('../partials/adminFoot') %>

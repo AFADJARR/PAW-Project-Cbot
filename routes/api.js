@@ -1,13 +1,13 @@
+// routes/api.js
 const express = require("express");
-const router = express.Router();
 const apiController = require("../controllers/apiController");
+const pesananController = require("../controllers/pesananController");
 
-router.get("/status", apiController.getStatus);
+const router = express.Router();
 
-router.get("/products", apiController.getAllProducts);
-router.get("/products/:id", apiController.getProductById); 
-router.post("/products", apiController.createProduct);
-router.put("/products/:id", apiController.updateProduct);
-router.delete("/products/:id", apiController.deleteProduct);
+router.get("/status", apiController.status);
+router.get("/produk", apiController.produk);
+router.get("/pesanan/:kode", pesananController.apiStatus); // status pesanan (tanpa data pribadi)
+router.use("/chat", require("./chat")); // POST /api/chat
 
 module.exports = router;

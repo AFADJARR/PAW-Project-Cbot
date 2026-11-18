@@ -1,4 +1,3 @@
-
 const validateChatInput = (req, res, next) => {
   const { message } = req.body;
 

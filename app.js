@@ -3,6 +3,7 @@ const path = require("path");
 const logger = require("./middlewares/logger");
 const webRoutes = require("./routes/web");
 const apiRoutes = require("./routes/api");
+const chatRoutes = require("./routes/chat.routes"); // <-- Route Chat AI Assistant
 const sequelize = require("./config/db");
 
 const app = express();
@@ -16,8 +17,10 @@ app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Daftarkan Routes
 app.use("/", webRoutes);
 app.use("/api", apiRoutes);
+app.use("/api", chatRoutes); // Endpoint: POST /api/chat
 
 sequelize
   .sync()

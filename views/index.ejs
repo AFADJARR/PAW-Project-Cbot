@@ -67,6 +67,39 @@
           <!-- Data produk dimuat secara dinamis via JavaScript -->
         </div>
       </div>
+
+      <!-- WIDGET AI ASSISTANT (GEMINI) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-base flex items-center gap-2">
+            🤖 Cbot AI Assistant <span class="text-xs bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-600/30">Gemini API</span>
+          </h3>
+          <span class="text-xs text-slate-400">Tanya info produk & layanan aplikasi</span>
+        </div>
+
+        <!-- Area Chat Box -->
+        <div id="chat-box" class="h-64 overflow-y-auto border border-slate-800 p-4 rounded-xl mb-4 bg-slate-950/50 flex flex-col space-y-3">
+          <div class="text-xs bg-slate-800 text-slate-300 p-3 rounded-xl self-start max-w-[85%] border border-slate-700">
+            Halo! Saya AI Assistant Cbot Plat. Ada yang bisa saya bantu terkait katalog varian plat kendaraan di aplikasi ini?
+          </div>
+        </div>
+
+        <!-- Input & Tombol Kirim -->
+        <div class="flex gap-2">
+          <input type="text" id="chat-input" placeholder="Tulis pertanyaan (misal: Apa saja produk plat yang tersedia?)..." 
+            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
+            onkeypress="if(event.key === 'Enter') sendChatMessage()">
+          <button onclick="sendChatMessage()" id="chat-send-btn" 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-lg shadow-blue-600/20">
+            Kirim
+          </button>
+        </div>
+        <div id="chat-loading" class="text-xs text-slate-400 mt-2 hidden flex items-center gap-2">
+          <span class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></span> AI sedang memproses jawaban...
+        </div>
+      </div>
+      <!-- END WIDGET AI ASSISTANT -->
+
     </div>
   </main>
 
@@ -193,6 +226,64 @@
       document.getElementById('crudModal').classList.add('hidden');
     }
 
+    // Script Kirim Chat ke Backend API Gemini (/api/chat)
+    async function sendChatMessage() {
+      const inputField = document.getElementById('chat-input');
+      const chatBox = document.getElementById('chat-box');
+      const loadingIndicator = document.getElementById('chat-loading');
+      const sendBtn = document.getElementById('chat-send-btn');
+      
+      const message = inputField.value.trim();
+      if (!message) return;
+
+      // Tampilkan pesan user di UI
+      chatBox.innerHTML += `
+        <div class="text-xs bg-blue-600/20 text-blue-200 border border-blue-600/30 p-3 rounded-xl self-end max-w-[85%]">
+          ${escapeHtml(message)}
+        </div>`;
+      inputField.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Tampilkan indikator loading
+      loadingIndicator.classList.remove('hidden');
+      sendBtn.disabled = true;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          chatBox.innerHTML += `
+            <div class="text-xs bg-slate-800 text-slate-200 border border-slate-700 p-3 rounded-xl self-start max-w-[85%]">
+              ${escapeHtml(result.data.reply)}
+            </div>`;
+        } else {
+          chatBox.innerHTML += `
+            <div class="text-xs bg-red-600/20 text-red-300 border border-red-600/30 p-3 rounded-xl self-start max-w-[85%]">
+              Error: ${escapeHtml(result.message)}
+            </div>`;
+        }
+      } catch (error) {
+        chatBox.innerHTML += `
+          <div class="text-xs bg-red-600/20 text-red-300 border border-red-600/30 p-3 rounded-xl self-start max-w-[85%]">
+            Gagal terhubung ke server backend AI.
+          </div>`;
+      } finally {
+        loadingIndicator.classList.add('hidden');
+        sendBtn.disabled = false;
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
 
     loadProducts();
   </script>

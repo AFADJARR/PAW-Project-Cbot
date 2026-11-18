@@ -1,0 +1,103 @@
+<%- include('partials/head') %>
+
+<h1 class="text-xl font-semibold mb-4">Pesan Plat Nomor Custom</h1>
+
+<form id="form-pesan" method="post" action="/pesan" class="<%= ui.card %> p-5 sm:p-6 space-y-4" novalidate>
+  <div>
+    <label for="produkId" class="<%= ui.label %>">Varian plat</label>
+    <select id="produkId" name="produkId" required class="<%= ui.input %>">
+      <option value="">Pilih jenis kendaraan, bahan, dan varian</option>
+      <% ['Mobil', 'Motor'].forEach(function (jenis) {
+           const daftar = produk.filter(function (p) { return p.jenisKendaraan === jenis; });
+           if (!daftar.length) return; %>
+        <optgroup label="<%= jenis %>">
+          <% daftar.forEach(function (p) { %>
+            <option value="<%= p.id %>" data-harga="<%= p.harga %>" data-custom="<%= /custom/i.test(p.varian) ? '1' : '0' %>"
+              <%= String(values.produkId) === String(p.id) ? 'selected' : '' %>>
+              <%= p.bahan %> &middot; <%= p.varian %> - <%= formatRupiah(p.harga) %>
+            </option>
+          <% }) %>
+        </optgroup>
+      <% }) %>
+    </select>
+    <% if (errors.produkId) { %><p class="<%= ui.error %>"><%= errors.produkId %></p><% } %>
+    <% if (!produk.length) { %><p class="<%= ui.error %>">Maaf, saat ini belum ada varian yang tersedia.</p><% } %>
+  </div>
+
+  <div>
+    <label for="teksPlat" class="<%= ui.label %>">Teks plat</label>
+    <input id="teksPlat" name="teksPlat" type="text" required maxlength="12" autocomplete="off"
+      placeholder="Contoh: AB 1234 CD" value="<%= values.teksPlat || '' %>" class="<%= ui.input %> uppercase tracking-widest">
+    <p class="text-xs text-slate-500 mt-1">Huruf dan angka saja, maksimal 9 karakter (spasi tidak dihitung).</p>
+    <% if (errors.teksPlat) { %><p class="<%= ui.error %>"><%= errors.teksPlat %></p><% } %>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="warna" class="<%= ui.label %>">Warna plat</label>
+      <select id="warna" name="warna" class="<%= ui.input %>">
+        <% warna.forEach(function (w) { %>
+          <option value="<%= w %>" <%= (values.warna || 'Hitam') === w ? 'selected' : '' %>><%= w %></option>
+        <% }) %>
+      </select>
+      <p id="warna-info" class="text-xs text-slate-500 mt-1">Pilihan warna hanya untuk varian Custom Warna.</p>
+      <% if (errors.warna) { %><p class="<%= ui.error %>"><%= errors.warna %></p><% } %>
+    </div>
+    <div>
+      <label for="jumlah" class="<%= ui.label %>">Jumlah</label>
+      <input id="jumlah" name="jumlah" type="number" min="1" max="10" step="1" required
+        value="<%= values.jumlah || 1 %>" class="<%= ui.input %>">
+      <% if (errors.jumlah) { %><p class="<%= ui.error %>"><%= errors.jumlah %></p><% } %>
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="nama" class="<%= ui.label %>">Nama</label>
+      <input id="nama" name="nama" type="text" required maxlength="60" autocomplete="name"
+        value="<%= values.nama || '' %>" class="<%= ui.input %>">
+      <% if (errors.nama) { %><p class="<%= ui.error %>"><%= errors.nama %></p><% } %>
+    </div>
+    <div>
+      <label for="noHp" class="<%= ui.label %>">Nomor HP</label>
+      <input id="noHp" name="noHp" type="tel" required maxlength="16" autocomplete="tel" inputmode="tel"
+        placeholder="081234567890" value="<%= values.noHp || '' %>" class="<%= ui.input %>">
+      <% if (errors.noHp) { %><p class="<%= ui.error %>"><%= errors.noHp %></p><% } %>
+    </div>
+  </div>
+
+  <!-- Pratinjau plat (F-07) -->
+  <div>
+    <p class="<%= ui.label %>">Pratinjau</p>
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 grid place-items-center">
+      <div id="plat-preview" aria-label="Pratinjau plat"
+        class="px-6 py-3 rounded-lg border-4 font-bold text-2xl sm:text-3xl tracking-[0.25em] text-center min-w-[200px]"
+        style="background:#111;color:#fff;border-color:#ddd;font-family:ui-monospace,monospace">--</div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
+    <div>
+      <p class="text-xs text-slate-500">Total</p>
+      <p id="total" class="text-lg font-semibold">Rp0</p>
+    </div>
+    <button type="submit" class="<%= ui.btn %>" <%= produk.length ? '' : 'disabled' %>>Kirim Pesanan</button>
+  </div>
+</form>
+
+<!-- Konfirmasi sebelum pesanan dikirim -->
+<dialog id="dialog-konfirmasi" class="rounded-2xl p-0 w-[min(92vw,420px)] backdrop:bg-black/40">
+  <div class="p-5">
+    <h2 class="text-base font-semibold">Periksa pesanan Anda</h2>
+    <p class="text-xs text-slate-500 mt-1">Pastikan teks plat sudah benar. Plat yang sudah dicetak tidak bisa diubah.</p>
+    <dl id="ringkasan" class="mt-4 text-sm grid grid-cols-[110px_1fr] gap-y-1"></dl>
+    <div class="flex justify-end gap-2 mt-5">
+      <button type="button" id="btn-batal" class="<%= ui.btnGhost %>">Periksa lagi</button>
+      <button type="button" id="btn-kirim" class="<%= ui.btn %>">Kirim Pesanan</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="/js/pesan.js" defer></script>
+
+<%- include('partials/footer') %>

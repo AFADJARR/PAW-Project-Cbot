@@ -1,291 +1,49 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Cbot Plat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex">
+<%- include('partials/head') %>
 
-  <aside class="w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col justify-between p-6">
-    <div>
-      <div class="flex items-center gap-3 mb-8">
-        <div class="bg-blue-600 p-2 rounded-lg font-bold text-white">CB</div>
-        <span class="font-bold text-lg tracking-wide">Cbot Plat Admin</span>
-      </div>
-      <nav class="space-y-1">
-        <a href="#" class="flex items-center gap-3 px-4 py-2.5 bg-blue-600/20 text-blue-400 border border-blue-600/30 rounded-xl font-medium text-sm">
-          📊 Dashboard Produk
-        </a>
-        <a href="/api/products" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-medium text-sm transition">
-          🔌 Endpoint API JSON
-        </a>
-      </nav>
-    </div>
-    <div class="text-xs text-slate-500">
-      Cbot Plat v1.0 &bull; MVC Node.js
-    </div>
-  </aside>
-
-  <main class="flex-1 flex flex-col min-h-screen">
-    <header class="bg-slate-900/50 backdrop-blur border-b border-slate-800 px-8 py-4 flex justify-between items-center">
-      <div>
-        <h1 class="text-xl font-bold">Dashboard Manajemen Produk</h1>
-        <p class="text-xs text-slate-400">Kelola katalog varian plat kendaraan secara real-time dari database</p>
-      </div>
-      <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-600/20">
-        + Tambah Produk
-      </button>
-    </header>
-
-    <div class="p-8 space-y-6 flex-1">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs text-slate-400 font-medium">Total Produk</p>
-          <h3 id="statTotal" class="text-2xl font-bold mt-1 text-white">0</h3>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs text-slate-400 font-medium">Kategori Aktif</p>
-          <h3 id="statCategories" class="text-2xl font-bold mt-1 text-blue-400">Mobil, Motor</h3>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs text-slate-400 font-medium">Status Server</p>
-          <h3 class="text-2xl font-bold mt-1 text-emerald-400 flex items-center gap-2">
-            <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span> Online
-          </h3>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="font-bold text-base">Daftar Varian Plat (Database)</h3>
-          <a href="/api/products" target="_blank" class="text-xs text-blue-400 hover:underline">Lihat Data Mentah API &rarr;</a>
-        </div>
-
-        <div id="product-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Data produk dimuat secara dinamis via JavaScript -->
-        </div>
-      </div>
-
-      <!-- WIDGET AI ASSISTANT (GEMINI) -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-base flex items-center gap-2">
-            🤖 Cbot AI Assistant <span class="text-xs bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-600/30">Gemini API</span>
-          </h3>
-          <span class="text-xs text-slate-400">Tanya info produk & layanan aplikasi</span>
-        </div>
-
-        <!-- Area Chat Box -->
-        <div id="chat-box" class="h-64 overflow-y-auto border border-slate-800 p-4 rounded-xl mb-4 bg-slate-950/50 flex flex-col space-y-3">
-          <div class="text-xs bg-slate-800 text-slate-300 p-3 rounded-xl self-start max-w-[85%] border border-slate-700">
-            Halo! Saya AI Assistant Cbot Plat. Ada yang bisa saya bantu terkait katalog varian plat kendaraan di aplikasi ini?
-          </div>
-        </div>
-
-        <!-- Input & Tombol Kirim -->
-        <div class="flex gap-2">
-          <input type="text" id="chat-input" placeholder="Tulis pertanyaan (misal: Apa saja produk plat yang tersedia?)..." 
-            class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500"
-            onkeypress="if(event.key === 'Enter') sendChatMessage()">
-          <button onclick="sendChatMessage()" id="chat-send-btn" 
-            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-lg shadow-blue-600/20">
-            Kirim
-          </button>
-        </div>
-        <div id="chat-loading" class="text-xs text-slate-400 mt-2 hidden flex items-center gap-2">
-          <span class="w-2 h-2 bg-blue-500 rounded-full animate-ping"></span> AI sedang memproses jawaban...
-        </div>
-      </div>
-      <!-- END WIDGET AI ASSISTANT -->
-
-    </div>
-  </main>
-
-  <!-- Modal Form CRUD -->
-  <div id="crudModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md text-white shadow-2xl">
-      <h3 id="modalTitle" class="text-lg font-bold mb-4">Tambah Produk</h3>
-      <form id="productForm" onsubmit="saveProduct(event)">
-        <input type="hidden" id="prodId">
-        
-        <div class="mb-4">
-          <label class="block text-xs font-semibold mb-1 text-slate-300">Nama Varian</label>
-          <input type="text" id="prodName" required placeholder="Contoh: Akrilik Premium" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-xs font-semibold mb-1 text-slate-300">Kategori</label>
-          <select id="prodCategory" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
-            <option value="Mobil">Mobil</option>
-            <option value="Motor">Motor</option>
-          </select>
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-xs font-semibold mb-1 text-slate-300">Harga (Rp)</label>
-          <input type="number" id="prodPrice" required placeholder="120000" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
-        </div>
-
-        <div class="flex justify-end gap-2">
-          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm transition">Batal</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm font-semibold transition shadow-lg shadow-blue-600/20">Simpan Data</button>
-        </div>
-      </form>
+<section class="<%= ui.card %> p-5 sm:p-6">
+  <div class="flex items-start gap-3">
+    <div class="shrink-0 w-10 h-10 rounded-full bg-slate-900 text-white grid place-items-center text-sm font-semibold">CB</div>
+    <div class="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-3">
+      <p class="font-medium">Halo! Mau pesan plat untuk kendaraan apa?</p>
+      <p class="text-sm text-slate-500 mt-1">Pilih jenis kendaraan untuk melihat varian dan harga, atau langsung pesan.</p>
     </div>
   </div>
 
-  <script>
-    async function loadProducts() {
-      try {
-        const res = await fetch('/api/products');
-        const result = await res.json();
-        const data = result.data;
-        const container = document.getElementById('product-list');
-        
-        document.getElementById('statTotal').innerText = data.length;
+  <div class="flex flex-wrap gap-3 mt-5 sm:ml-[52px]">
+    <a href="/?jenis=Mobil"
+       class="px-5 py-2 rounded-full border text-sm font-medium transition <%= jenis === 'Mobil' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300 hover:border-slate-900' %>">Mobil</a>
+    <a href="/?jenis=Motor"
+       class="px-5 py-2 rounded-full border text-sm font-medium transition <%= jenis === 'Motor' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-300 hover:border-slate-900' %>">Motor</a>
+    <a href="/pesan" class="px-5 py-2 rounded-full border border-emerald-600 text-emerald-700 text-sm font-medium hover:bg-emerald-50 transition">Pesan Plat</a>
+    <a href="/status" class="px-5 py-2 rounded-full border border-slate-300 text-sm font-medium hover:border-slate-900 transition">Cek Status</a>
+  </div>
+</section>
 
-        if (!data || data.length === 0) {
-          container.innerHTML = `<p class="text-slate-400 text-center col-span-2 py-8">Belum ada produk tersimpan di database.</p>`;
-          return;
-        }
+<% if (jenis) { %>
+  <section class="mt-6">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-3">Varian plat <%= jenis %> yang tersedia</h2>
 
-        container.innerHTML = data.map(item => `
-          <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-xl flex justify-between items-center transition hover:border-slate-700">
+    <% if (produk.length === 0) { %>
+      <p class="<%= ui.card %> p-4 text-sm text-slate-500">Maaf, belum ada varian yang tersedia untuk <%= jenis %>.</p>
+    <% } else { %>
+      <ul class="grid gap-3 sm:grid-cols-2">
+        <% produk.forEach(function (p) { %>
+          <li class="<%= ui.card %> p-4 flex items-center justify-between gap-3">
             <div>
-              <span class="text-[10px] uppercase tracking-wider bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md font-semibold">${item.category}</span>
-              <h4 class="font-bold text-white text-base mt-1.5">${item.name}</h4>
-              <p class="text-emerald-400 font-semibold text-sm mt-0.5">Rp ${Number(item.price).toLocaleString('id-ID')}</p>
+              <p class="font-medium"><%= p.bahan %> &middot; <%= p.varian %></p>
+              <p class="text-xs text-slate-500 mt-0.5"><%= p.jenisKendaraan %></p>
             </div>
-            <div class="flex items-center gap-1.5">
-              <button onclick="editProduct(${item.id}, '${item.name.replace(/'/g, "\\'")}', '${item.category}', ${item.price})" class="px-3 py-1.5 bg-amber-600/10 text-amber-400 hover:bg-amber-600/20 border border-amber-600/20 rounded-lg text-xs font-semibold transition">Edit</button>
-              <button onclick="deleteProduct(${item.id})" class="px-3 py-1.5 bg-red-600/10 text-red-400 hover:bg-red-600/20 border border-red-600/20 rounded-lg text-xs font-semibold transition">Hapus</button>
-            </div>
-          </div>
-        `).join('');
-      } catch (err) {
-        console.error("Gagal memuat produk:", err);
-      }
-    }
+            <p class="font-semibold whitespace-nowrap"><%= formatRupiah(p.harga) %></p>
+          </li>
+        <% }) %>
+      </ul>
+      <a href="/pesan" class="<%= ui.btn %> mt-4">Pesan sekarang</a>
+    <% } %>
 
-    async function saveProduct(e) {
-      e.preventDefault();
-      const id = document.getElementById('prodId').value;
-      const body = {
-        name: document.getElementById('prodName').value,
-        category: document.getElementById('prodCategory').value,
-        price: document.getElementById('prodPrice').value
-      };
+    <a href="/" class="inline-block mt-4 ml-2 text-sm text-slate-600 underline">&larr; Kembali ke menu utama</a>
+  </section>
+<% } %>
 
-      const url = id ? `/api/products/${id}` : '/api/products';
-      const method = id ? 'PUT' : 'POST';
+<%- include('partials/chat') %>
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (res.ok) {
-        closeModal();
-        loadProducts();
-      } else {
-        alert('Gagal menyimpan data produk.');
-      }
-    }
-
-    async function deleteProduct(id) {
-      if (confirm('Yakin ingin menghapus produk ini dari database?')) {
-        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          loadProducts();
-        } else {
-          alert('Gagal menghapus produk.');
-        }
-      }
-    }
-
-    function openModal() {
-      document.getElementById('productForm').reset();
-      document.getElementById('prodId').value = '';
-      document.getElementById('modalTitle').innerText = 'Tambah Produk Baru';
-      document.getElementById('crudModal').classList.remove('hidden');
-    }
-
-    function editProduct(id, name, category, price) {
-      document.getElementById('prodId').value = id;
-      document.getElementById('prodName').value = name;
-      document.getElementById('prodCategory').value = category;
-      document.getElementById('prodPrice').value = price;
-      document.getElementById('modalTitle').innerText = 'Edit Data Produk';
-      document.getElementById('crudModal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('crudModal').classList.add('hidden');
-    }
-
-    // Script Kirim Chat ke Backend API Gemini (/api/chat)
-    async function sendChatMessage() {
-      const inputField = document.getElementById('chat-input');
-      const chatBox = document.getElementById('chat-box');
-      const loadingIndicator = document.getElementById('chat-loading');
-      const sendBtn = document.getElementById('chat-send-btn');
-      
-      const message = inputField.value.trim();
-      if (!message) return;
-
-      // Tampilkan pesan user di UI
-      chatBox.innerHTML += `
-        <div class="text-xs bg-blue-600/20 text-blue-200 border border-blue-600/30 p-3 rounded-xl self-end max-w-[85%]">
-          ${escapeHtml(message)}
-        </div>`;
-      inputField.value = '';
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      // Tampilkan indikator loading
-      loadingIndicator.classList.remove('hidden');
-      sendBtn.disabled = true;
-
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          chatBox.innerHTML += `
-            <div class="text-xs bg-slate-800 text-slate-200 border border-slate-700 p-3 rounded-xl self-start max-w-[85%]">
-              ${escapeHtml(result.data.reply)}
-            </div>`;
-        } else {
-          chatBox.innerHTML += `
-            <div class="text-xs bg-red-600/20 text-red-300 border border-red-600/30 p-3 rounded-xl self-start max-w-[85%]">
-              Error: ${escapeHtml(result.message)}
-            </div>`;
-        }
-      } catch (error) {
-        chatBox.innerHTML += `
-          <div class="text-xs bg-red-600/20 text-red-300 border border-red-600/30 p-3 rounded-xl self-start max-w-[85%]">
-            Gagal terhubung ke server backend AI.
-          </div>`;
-      } finally {
-        loadingIndicator.classList.add('hidden');
-        sendBtn.disabled = false;
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    }
-
-    function escapeHtml(text) {
-      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-      return text.replace(/[&<>"']/g, m => map[m]);
-    }
-
-    loadProducts();
-  </script>
-</body>
-</html>
+<%- include('partials/footer') %>

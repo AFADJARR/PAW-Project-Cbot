@@ -1,22 +1,16 @@
-const { Sequelize } = require("sequelize");
-require("dotenv").config();
+// config/db.js
+// Koneksi MySQL memakai connection pool. Nilai diambil dari file .env.
+const mysql = require("mysql2/promise");
 
-const sequelize = new Sequelize(
-  process.env.DB_DATABASE,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST || "localhost",
-    port: process.env.DB_PORT || 5432,
-    dialect: process.env.DB_DIALECT || "postgres",
-    logging: false, 
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000,
-    },
-  },
-);
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || "localhost",
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "cbot_plat",
+  waitForConnections: true,
+  connectionLimit: 10,
+  charset: "utf8mb4",
+});
 
-module.exports = sequelize;
+module.exports = pool;

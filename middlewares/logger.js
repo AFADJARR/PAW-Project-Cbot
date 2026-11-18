@@ -1,14 +1,27 @@
-const logger = (req, res, next) => {
-  const timestamp = new Date().toISOString();
-  const method = req.method;
-  const url = req.originalUrl;
+// middlewares/logger.js
+// Mencatat: timestamp, metode HTTP, path, status response, durasi.
+// Ditulis ke console dan ke file logs/access.log. Isi pesan chat TIDAK dicatat.
+const fs = require("fs");
+const path = require("path");
+
+const logDir = path.join(__dirname, "..", "logs");
+fs.mkdirSync(logDir, { recursive: true });
+const fileLog = fs.createWriteStream(path.join(logDir, "access.log"), {
+  flags: "a",
+});
+
+function logger(req, res, next) {
+  const mulai = Date.now();
 
   res.on("finish", () => {
-    const statusCode = res.statusCode;
-    console.log(`[${timestamp}] ${method} ${url} -> Status: ${statusCode}`);
+    const baris = `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${
+      Date.now() - mulai
+    }ms`;
+    console.log(baris);
+    fileLog.write(baris + "\n");
   });
 
   next();
-};
+}
 
 module.exports = logger;

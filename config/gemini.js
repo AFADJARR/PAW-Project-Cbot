@@ -1,12 +1,17 @@
 // config/gemini.js
-const { GoogleGenAI } = require("@google/genai");
-require("dotenv").config();
-
-// Inisialisasi client Google Gen AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL_NAME = "gemini-3.5-flash-lite";
-
+// Konfigurasi Gemini. API key HANYA dibaca dari environment variable (.env) di server.
+// Nilai ini tidak pernah dikirim ke frontend.
 module.exports = {
-  ai,
-  MODEL_NAME,
+  apiKey: process.env.GEMINI_API_KEY || "",
+  // Cek kode model yang tersedia untuk akun Anda di https://aistudio.google.com
+  model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+
+  // Batas panjang pesan pengguna (karakter), dipakai middleware validateChatInput
+  maxMessageLength: Number(process.env.CHAT_MAX_LENGTH) || 300,
+
+  // Pengaturan generasi jawaban
+  temperature: 0.2, // rendah = jawaban lebih konsisten dan tidak "kreatif"
+  maxOutputTokens: 2048, // longgar, karena model "thinking" memakai token ini juga
+  timeoutMs: 45000, // batas waktu menunggu Gemini
+  maxRetry: 1, // ulangi sekali jika Gemini sedang sibuk (503)
 };
